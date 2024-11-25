@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Demo</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f3f4f6;
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .progress-container {
+      width: 80%;
+      max-width: 600px;
+      height: 20px;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background-color: #4caf50;
+      transition: width 0.1s;
+    }
+    .message {
+      font-size: 1rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Loading, please wait...</h1>
+  <div class="progress-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+  <p class="message" id="message">Initializing...</p>
+  
+  <script>
+    const progressBar = document.getElementById('progress-bar');
+    const message = document.getElementById('message');
+    const serviceUrl = 'https://cv-web-app-3m4f2rmfzq-uc.a.run.app/'; // Replace with your Cloud Run URL
+    const maxRetries = 10; // Retry for ~30 seconds (10 retries * 3 seconds)
+    let retries = 0;
+    let progress = 0;
+    const totalDuration = 20000; // 20 seconds in milliseconds
+    const updateInterval = 100; // Progress update interval in milliseconds
+
+    function updateProgress() {
+      progress += (100 / (totalDuration / updateInterval));
+      progressBar.style.width = `${Math.min(progress, 100)}%`;
+    }
+
+    async function checkService() {
+      try {
+        const response = await fetch(serviceUrl);
+        if (response.ok) {
+          window.location.href = serviceUrl;
+        } else {
+          throw new Error('Service not ready');
+        }
+      } catch (error) {
+        if (retries < maxRetries) {
+          retries++;
+          setTimeout(checkService, 3000); // Retry every 3 seconds
+        } else {
+          message.textContent = 'The service is taking longer than expected. Please try again later.';
+        }
+      }
+    }
+
+    // Start updating the progress bar
+    const interval = setInterval(() => {
+      updateProgress();
+      if (progress >= 100) {
+        clearInterval(interval);
+      }
+    }, updateInterval);
+
+    // Start checking the service readiness
+    checkService();
+  </script>
+</body>
+</html>
+
